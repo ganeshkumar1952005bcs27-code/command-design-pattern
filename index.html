@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Design Pattern</title>
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#262528;color:#eee;font-family:Arial,Helvetica,sans-serif;line-height:1.75}
+header{position:sticky;top:0;z-index:10;background:#211f22;border-bottom:1px solid #454248;padding:12px 20px}
+.bar{max-width:1000px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-weight:700;font-size:18px}.logo span{color:#b77bff}
+.actions button{background:#302e33;color:#fff;border:1px solid #55515a;border-radius:6px;padding:8px 12px;margin-left:6px;cursor:pointer}
+main{max-width:950px;margin:auto;padding:45px 22px 80px}
+.breadcrumb{font-size:13px;color:#aaa5ad;margin-bottom:35px}
+.kicker{color:#caa1f5;font-weight:700}
+h1{font-size:64px;line-height:1.05;margin:10px 0 8px}
+h2{font-size:38px;line-height:1.2;margin:65px 0 18px}
+h3{font-size:23px;margin-top:32px}
+p,li{color:#c8c3ca;font-size:16px}
+.lead{font-size:20px}
+.note{border-left:4px solid #b77bff;background:#332e38;padding:14px 18px;margin:22px 0}
+.structure-image{background:#3e7048;border-radius:4px;padding:12px;max-width:680px;margin:28px auto 10px}
+.structure-image img{display:block;width:100%;height:auto}
+.caption{text-align:center;color:#9e999f;font-size:13px}
+.roles{margin-top:30px}
+.role{margin:26px 0}
+.role strong{color:#fff}
+code{background:#353238;border-radius:4px;padding:2px 5px;color:#e2c8ff}
+pre{background:#1f1e21;border:1px solid #444148;border-radius:7px;padding:20px;overflow:auto;color:#eee}
+.code{position:relative}.copy{position:absolute;right:10px;top:10px;background:#302e33;color:#fff;border:1px solid #55515a;border-radius:5px;padding:6px 9px;cursor:pointer}
+.quiz{border:1px solid #48454c;background:#2d2c30;border-radius:7px;padding:20px}
+.quiz button{display:block;width:100%;text-align:left;margin:8px 0;padding:10px;background:#37353a;color:#eee;border:1px solid #4b484f;border-radius:5px;cursor:pointer}
+#audioStatus{position:fixed;bottom:16px;left:16px;background:#211f22;border:1px solid #514d55;padding:8px 12px;border-radius:6px;color:#ddd;display:none}
+@media(max-width:600px){h1{font-size:46px}h2{font-size:30px}.lead{font-size:18px}.structure-image{padding:7px}}
+</style>
+</head>
+<body>
+<header>
+<div class="bar">
+<div class="logo">Pattern<span>Learn</span> · Command</div>
+<div class="actions">
+<button onclick="readLesson()">🔊 Read aloud</button>
+<button onclick="stopReading()">■ Stop</button>
+</div>
+</div>
+</header>
+
+<main id="lesson">
+<div class="breadcrumb">Design Patterns / Behavioral Design Patterns / Command</div>
+
+<section>
+<h1>Command</h1>
+<p class="lead">Also known as <b>Action</b> or <b>Transaction</b>.</p>
+<p class="lead">Turn a request into a stand-alone object that contains all information about the request.</p>
+</section>
+
+<section>
+<h2>Intent</h2>
+<p>The Command pattern converts a request into an object. This lets the request be passed around, stored, delayed, queued, logged, and used for undoable operations.</p>
+</section>
+
+<section>
+<h2>Problem</h2>
+<p>Imagine a text editor with buttons, menus, and keyboard shortcuts. Many different interface elements may need to perform the same operation.</p>
+<p>If each element directly contains the operation's logic, the interface becomes tightly coupled to the receiver and the same logic may be duplicated.</p>
+<div class="note"><b>Problem:</b> How can different senders trigger the same operation without knowing how the receiver performs it?</div>
+</section>
+
+<section>
+<h2>Solution</h2>
+<p>Extract the request into a separate command object. The command stores the receiver and any required parameters and exposes a common <code>execute()</code> method.</p>
+<p>The invoker knows only the Command interface. The client creates the concrete command and connects it to the invoker.</p>
+</section>
+
+<section>
+<h2>Real-World Analogy</h2>
+<p>A restaurant order works like a command. The waiter accepts an order and passes it to the kitchen. The order contains the information required to prepare the meal, while the waiter does not need to know how the chef performs the work.</p>
+</section>
+
+<section id="structure">
+<h2>Structure</h2>
+<p>The Command pattern consists of five main participants: Sender/Invoker, Command, Concrete Command, Receiver, and Client.</p>
+
+<!-- Official Refactoring.Guru structure image -->
+<figure class="structure-image">
+<img src="images/command/structure.png"
+     alt="Structure of the Command design pattern"
+     width="630"
+     loading="lazy">
+</figure>
+<div class="caption">Command pattern structure diagram</div>
+
+<div class="roles">
+<div class="role"><strong>1. Sender / Invoker</strong><p>Responsible for initiating requests. It stores a reference to a command object and triggers the command instead of sending the request directly to the receiver.</p></div>
+<div class="role"><strong>2. Command</strong><p>Declares the common execution operation, usually <code>execute()</code>.</p></div>
+<div class="role"><strong>3. Concrete Command</strong><p>Implements the command interface. It stores a receiver reference and request parameters, then delegates the actual operation to the receiver.</p></div>
+<div class="role"><strong>4. Receiver</strong><p>Contains the actual business logic and knows how to perform the operation.</p></div>
+<div class="role"><strong>5. Client</strong><p>Creates the receiver and concrete command objects and configures the invoker with the command.</p></div>
+</div>
+</section>
+
+<section>
+<h2>Pseudocode</h2>
+<div class="code"><button class="copy" onclick="copyBlock('pseudo',this)">Copy</button><pre id="pseudo">interface Command {
+    execute();
+    undo();
+}
+
+class ConcreteCommand implements Command {
+    receiver;
+    params;
+
+    execute() {
+        receiver.operation(params);
+    }
+
+    undo() {
+        receiver.restore();
+    }
+}
+
+class Invoker {
+    command;
+
+    setCommand(command) {
+        this.command = command;
+    }
+
+    executeCommand() {
+        command.execute();
+    }
+}</pre></div>
+</section>
+
+<section>
+<h2>Applicability</h2>
+<ul>
+<li>When you want to parameterize an object with an operation.</li>
+<li>When requests need to be queued or scheduled.</li>
+<li>When requests need to be logged or stored.</li>
+<li>When you need undo/redo functionality.</li>
+</ul>
+</section>
+
+<section>
+<h2>How to Implement</h2>
+<ol>
+<li>Declare a command interface with a common execution method.</li>
+<li>Create concrete command classes for individual requests.</li>
+<li>Store the receiver and required parameters inside the concrete command.</li>
+<li>Give the invoker a command reference.</li>
+<li>Let the client create and connect the objects.</li>
+</ol>
+</section>
+
+<section>
+<h2>Java Implementation</h2>
+<div class="code"><button class="copy" onclick="copyBlock('java',this)">Copy</button><pre id="java">interface Command {
+    void execute();
+    void undo();
+}
+
+class Light {
+    void turnOn() {
+        System.out.println("Light ON");
+    }
+
+    void turnOff() {
+        System.out.println("Light OFF");
+    }
+}
+
+class LightOnCommand implements Command {
+    private final Light light;
+
+    LightOnCommand(Light light) {
+        this.light = light;
+    }
+
+    public void execute() {
+        light.turnOn();
+    }
+
+    public void undo() {
+        light.turnOff();
+    }
+}
+
+class RemoteControl {
+    private Command command;
+
+    void setCommand(Command command) {
+        this.command = command;
+    }
+
+    void pressButton() {
+        command.execute();
+    }
+
+    void pressUndo() {
+        command.undo();
+    }
+}
+
+public class CommandDemo {
+    public static void main(String[] args) {
+        Light light = new Light();
+
+        Command command = new LightOnCommand(light);
+
+        RemoteControl remote = new RemoteControl();
+        remote.setCommand(command);
+
+        remote.pressButton();
+        remote.pressUndo();
+    }
+}</pre></div>
+<h3>Expected output</h3>
+<pre>Light ON
+Light OFF</pre>
+</section>
+
+<section>
+<h2>Pros and Cons</h2>
+<h3>Pros</h3>
+<ul><li>Separates senders from receivers.</li><li>Supports command history and undo.</li><li>Supports queued and delayed execution.</li><li>New commands can be added without changing the invoker.</li></ul>
+<h3>Cons</h3>
+<ul><li>Introduces additional classes.</li><li>Simple operations may require extra command objects.</li></ul>
+</section>
+
+<section>
+<h2>Relations with Other Patterns</h2>
+<ul>
+<li><b>Chain of Responsibility:</b> can pass requests through handlers, while Command packages a request as an object.</li>
+<li><b>Memento:</b> can save receiver state for undo operations.</li>
+<li><b>Strategy:</b> both encapsulate behavior, but Command represents a request while Strategy represents an interchangeable algorithm.</li>
+<li><b>Prototype:</b> can be useful when command objects need to be copied.</li>
+<li><b>Visitor:</b> provides a specialized mechanism for applying operations to object structures.</li>
+</ul>
+</section>
+
+<section>
+<h2>Quick Quiz</h2>
+<div class="quiz">
+<p><b>Which participant performs the actual business operation?</b></p>
+<button onclick="quiz(false)">A. Invoker</button>
+<button onclick="quiz(false)">B. Command</button>
+<button onclick="quiz(true)">C. Receiver</button>
+<button onclick="quiz(false)">D. Client</button>
+<p id="result"></p>
+</div>
+</section>
+</main>
+
+<div id="audioStatus"></div>
+
+<script>
+let speaking=false, chunks=[], pos=0;
+
+function makeChunks(text){
+  const sentences=text.match(/[^.!?]+[.!?]+/g)||[text];
+  const out=[]; let current="";
+  for(const s of sentences){
+    if((current+" "+s).length>850 && current){
+      out.push(current.trim()); current="";
+    }
+    current+=" "+s;
+  }
+  if(current.trim()) out.push(current.trim());
+  return out;
+}
+
+function readLesson(){
+  if(!("speechSynthesis" in window)){
+    alert("Speech synthesis is not supported by this browser.");
+    return;
+  }
+  speechSynthesis.cancel();
+  const clone=document.getElementById("lesson").cloneNode(true);
+  clone.querySelectorAll("button,pre,.structure-image").forEach(e=>e.remove());
+  chunks=makeChunks(clone.innerText.replace(/\s+/g," ").trim());
+  pos=0; speaking=true;
+  document.getElementById("audioStatus").style.display="block";
+  speakNext();
+}
+
+function speakNext(){
+  if(!speaking || pos>=chunks.length){
+    speaking=false;
+    document.getElementById("audioStatus").style.display="none";
+    return;
+  }
+  const u=new SpeechSynthesisUtterance(chunks[pos++]);
+  u.lang="en-IN";
+  u.rate=.95;
+  u.onstart=()=>document.getElementById("audioStatus").textContent="🔊 Reading...";
+  u.onend=speakNext;
+  u.onerror=()=>{speaking=false;document.getElementById("audioStatus").textContent="Audio error. Try Chrome or Edge.";};
+  speechSynthesis.speak(u);
+}
+
+function stopReading(){
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+  speaking=false; chunks=[]; pos=0;
+  document.getElementById("audioStatus").style.display="none";
+}
+
+function copyBlock(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{
+    const old=btn.textContent;btn.textContent="Copied ✓";
+    setTimeout(()=>btn.textContent=old,1200);
+  });
+}
+
+function quiz(correct){
+  const r=document.getElementById("result");
+  r.textContent=correct
+    ?"Correct! The Receiver performs the actual business operation."
+    :"Try again. Look at participant 4 in the Structure section.";
+  r.style.color=correct?"#8fd694":"#f0a35d";
+}
+</script>
+</body>
+</html>
